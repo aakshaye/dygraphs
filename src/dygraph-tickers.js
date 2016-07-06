@@ -384,6 +384,9 @@ export var getDateAxis = function(start_time, end_time, granularity, opts, dg) {
   date_array[DateField.DATEFIELD_MS] = accessors.getMilliseconds(start_date);
 
   var start_date_offset = date_array[datefield] % step;
+  var long_months = [0,2,4,6,7,9];
+  var short_months = [3,5,8,10];
+  
   if (granularity == Granularity.WEEKLY) {
     // This will put the ticks on Sundays.
     start_date_offset = accessors.getDay(start_date);
@@ -437,6 +440,52 @@ export var getDateAxis = function(start_time, end_time, granularity, opts, dg) {
                    });
       }
       date_array[datefield] += step;
+      if (datefield == 3) {
+        if(date_array[datefield] > 24) {            
+            if (long_months.indexOf(date_array[1]) != -1) {//Months with 31 days except December
+                if (date_array[2]==31) {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = 1;
+                    date_array[1]++;
+                } else {
+                  date_array[datefield] = date_array[datefield] % 24;
+                  date_array[2] = date_array[2] + 1;
+                }          
+            } else if (short_months.indexOf(date_array[1]) != -1) { //Months with 30 days
+                if (date_array[2]==30) {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = 1;
+                    date_array[1]++;
+                } else {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = date_array[2] + 1;
+                }
+            } else if (date_array[1] == 1) { //February
+                if (date_array[2]==29 && date_array[1]%4==0) { // leap year
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = 1;
+                    date_array[1]++;
+                } else if (date_array[2]==28) {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = 1;
+                    date_array[1]++;
+                } else {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = date_array[2] + 1;
+                }
+            } else if (date_array[1] == 11) {//December
+                if (date_array[2]==31) {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = 1;
+                    date_array[1]++;
+                    date_array[0]++;
+                } else {
+                    date_array[datefield] = date_array[datefield] % 24;
+                    date_array[2] = date_array[2] + 1;                    
+                } 
+            }
+        }        
+      }
       tick_date = accessors.makeDate.apply(null, date_array);
       tick_time = tick_date.getTime();
     }
